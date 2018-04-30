@@ -5,12 +5,16 @@ import java.util.Optional;
 
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Function;
+import org.mozilla.javascript.Callable;
 import org.mozilla.javascript.NativeContinuation;
 import org.mozilla.javascript.Scriptable;
 
 import il.ac.bgu.cs.bp.bpjs.execution.jsproxy.BThreadJsProxy;
 import il.ac.bgu.cs.bp.bpjs.analysis.ContinuationProgramState;
 import java.util.Objects;
+import org.mozilla.javascript.ContextFactory;
+import org.mozilla.javascript.ScriptRuntime;
+import org.mozilla.javascript.ScriptableObject;
 
 /**
  * The state of a BThread at {@code bsync}.
@@ -202,9 +206,20 @@ public class BThreadSyncSnapshot implements Serializable {
         BThreadSyncSnapshot other = (BThreadSyncSnapshot) obj;
         if (!Objects.equals(getName(), other.getName())) {
             return false;
-            
         }
-        return NativeContinuation.equalImplementations(continuation, other.continuation);
+        
+        // OK, need to delve into the continuations themselves.
+        Boolean res = (Boolean)ContextFactory.getGlobal().call(cx -> {
+            // Must perform the comparison in a context with a top call, as some
+            // standard objects (XML) need ScriptRuntime.getTopCallScope.
+            ScriptableObject top = cx.initStandardObjects();
+            Boolean internalRes = (Boolean)ScriptRuntime.doTopCall((Callable)(c, scope, thisObj, args) -> {
+                return NativeContinuation.equalImplementations(continuation, other.continuation);
+            }, cx, top, top, null, false);
+            return internalRes;
+        });
+        
+        return res;
         
     }
 

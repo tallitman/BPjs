@@ -74,7 +74,7 @@ public class BProgramJsProxyTest {
     }
 
     @Test
-    public void DeadlockSameThread() throws Exception{
+    public void DeadlockSameThreadDirect() throws Exception{
         BProgram bpr = new SingleResourceBProgram("bpsync-blockrequest.js");
         DfsBProgramVerifier sut = new DfsBProgramVerifier();
         sut.setVisitedNodeStore(new BThreadSnapshotVisitedStateStore());
@@ -82,8 +82,13 @@ public class BProgramJsProxyTest {
         assertTrue(res.isCounterExampleFound());
         assertEquals(VerificationResult.ViolationType.Deadlock, res.getViolationType());
         assertEquals("sampleEvent", traceEventNamesString(res.getCounterExampleTrace(), ""));
+    }
+    
+    @Test
+    public void DeadlockSameThreadPredicate() throws Exception{
+        DfsBProgramVerifier sut = new DfsBProgramVerifier();
         BProgram bprPred = new SingleResourceBProgram("bpsync-blockrequestPredicate.js");
-        res = sut.verify(bprPred);
+        VerificationResult res = sut.verify(bprPred);
         assertTrue(res.isCounterExampleFound());
         assertEquals(VerificationResult.ViolationType.Deadlock, res.getViolationType());
         assertEquals("sampleEvent", traceEventNamesString(res.getCounterExampleTrace(), ""));

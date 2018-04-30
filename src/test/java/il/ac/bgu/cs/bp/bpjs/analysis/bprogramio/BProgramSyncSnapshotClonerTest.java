@@ -8,7 +8,7 @@ import il.ac.bgu.cs.bp.bpjs.execution.listeners.InMemoryEventLoggingListener;
 import il.ac.bgu.cs.bp.bpjs.execution.listeners.PrintBProgramRunnerListener;
 import il.ac.bgu.cs.bp.bpjs.analysis.DfsBProgramVerifier;
 import il.ac.bgu.cs.bp.bpjs.analysis.VerificationResult;
-import il.ac.bgu.cs.bp.bpjs.internal.ExecutorServiceMaker;
+import il.ac.bgu.cs.bp.bpjs.internal.ExecutorServiceFactory;
 import static java.util.Collections.emptySet;
 import java.util.concurrent.ExecutorService;
 import org.junit.Test;
@@ -61,7 +61,7 @@ public class BProgramSyncSnapshotClonerTest {
         System.out.println("START Serialization test");
         BProgram bprog = new SingleResourceBProgram("SnapshotTests/BProgramSyncSnapshotClonerTest.js");
         BProgramSyncSnapshot cur = bprog.setup();
-        ExecutorService exSvc = ExecutorServiceMaker.makeWithName("test");
+        ExecutorService exSvc = ExecutorServiceFactory.serviceWithName("test");
         cur = cur.start(exSvc);
         cur.triggerEvent( 
                 cur.getStatements().stream().flatMap(s->s.getRequest().stream()).findFirst().get(),

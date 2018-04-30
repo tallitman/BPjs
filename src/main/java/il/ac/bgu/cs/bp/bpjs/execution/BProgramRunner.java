@@ -34,7 +34,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import il.ac.bgu.cs.bp.bpjs.execution.listeners.BProgramRunnerListener;
-import il.ac.bgu.cs.bp.bpjs.internal.ExecutorServiceMaker;
+import il.ac.bgu.cs.bp.bpjs.internal.ExecutorServiceFactory;
 import il.ac.bgu.cs.bp.bpjs.model.FailedAssertion;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -68,7 +68,7 @@ public class BProgramRunner implements Runnable {
     public void run() {
         try {
             // setup bprogram and runtime parts.
-            execSvc = ExecutorServiceMaker.makeWithName("BProgramRunner-" + instanceNum );
+            execSvc = ExecutorServiceFactory.serviceWithName("BProgramRunner-" + instanceNum );
             failedAssertion = null;
             listeners.forEach(l -> l.starting(bprog));
             BProgramSyncSnapshot cur = bprog.setup();

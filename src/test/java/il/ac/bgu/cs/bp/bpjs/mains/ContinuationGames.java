@@ -37,7 +37,7 @@ import il.ac.bgu.cs.bp.bpjs.model.BProgramSyncSnapshot;
 import il.ac.bgu.cs.bp.bpjs.model.BThreadSyncSnapshot;
 import il.ac.bgu.cs.bp.bpjs.model.StringBProgram;
 import il.ac.bgu.cs.bp.bpjs.execution.jsproxy.BProgramJsProxy;
-import il.ac.bgu.cs.bp.bpjs.internal.ExecutorServiceMaker;
+import il.ac.bgu.cs.bp.bpjs.internal.ExecutorServiceFactory;
 import il.ac.bgu.cs.bp.bpjs.model.BEvent;
 import java.util.HashMap;
 import java.util.Map;
@@ -71,7 +71,7 @@ public class ContinuationGames {
         BProgramSyncSnapshot cur = bprog.setup();
         
         // Run to first bsync
-        cur = cur.start( ExecutorServiceMaker.makeWithName("TEST"));
+        cur = cur.start(ExecutorServiceFactory.serviceWithName("TEST"));
         
         // Get a snapshot
         final BThreadSyncSnapshot snapshot = cur.getBThreadSnapshots().iterator().next();

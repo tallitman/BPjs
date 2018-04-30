@@ -34,9 +34,9 @@ import java.util.concurrent.atomic.AtomicInteger;
  * 
  * @author michael
  */
-public abstract class ExecutorServiceMaker {
+public abstract class ExecutorServiceFactory {
     
-    public static ExecutorService makeWithName( String threadNameTemplate ) {
+    public static ExecutorService serviceWithName( String threadNameTemplate ) {
         final ThreadFactory dtf = Executors.defaultThreadFactory();
         final AtomicInteger threadCoutner = new AtomicInteger(0);
         ThreadFactory tf = (Runnable r) -> {
@@ -47,7 +47,7 @@ public abstract class ExecutorServiceMaker {
         return Executors.newCachedThreadPool(tf);
     }
     
-    private ExecutorServiceMaker(){
+    private ExecutorServiceFactory(){
         // prevent instantiation
     }
     

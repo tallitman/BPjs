@@ -23,7 +23,7 @@
  */
 package il.ac.bgu.cs.bp.bpjs.analysis;
 
-import il.ac.bgu.cs.bp.bpjs.internal.ExecutorServiceMaker;
+import il.ac.bgu.cs.bp.bpjs.internal.ExecutorServiceFactory;
 import il.ac.bgu.cs.bp.bpjs.model.BProgram;
 import il.ac.bgu.cs.bp.bpjs.model.BProgramSyncSnapshot;
 import il.ac.bgu.cs.bp.bpjs.model.BThreadSyncSnapshot;
@@ -312,6 +312,6 @@ public class ContinuationProgramStateTest {
     
     @Before
     public void setup() {
-        exSvc = ExecutorServiceMaker.makeWithName("Test");
+        exSvc = ExecutorServiceFactory.serviceWithName("Test");
     }
 }

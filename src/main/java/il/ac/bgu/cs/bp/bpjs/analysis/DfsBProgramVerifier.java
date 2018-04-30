@@ -27,7 +27,7 @@ import java.util.*;
 
 import il.ac.bgu.cs.bp.bpjs.model.BProgram;
 import il.ac.bgu.cs.bp.bpjs.model.BEvent;
-import il.ac.bgu.cs.bp.bpjs.internal.ExecutorServiceMaker;
+import il.ac.bgu.cs.bp.bpjs.internal.ExecutorServiceFactory;
 import il.ac.bgu.cs.bp.bpjs.model.BProgramSyncSnapshot;
 
 import java.util.concurrent.ExecutorService;
@@ -84,7 +84,7 @@ public class DfsBProgramVerifier {
         visitedStatesCount = 1;
         currentPath.clear();
         visited.clear();
-        ExecutorService execSvc = ExecutorServiceMaker.makeWithName("DfsBProgramRunner-" + INSTANCE_COUNTER.incrementAndGet());
+        ExecutorService execSvc = ExecutorServiceFactory.serviceWithName("DfsBProgramRunner-" + INSTANCE_COUNTER.incrementAndGet());
         long start = System.currentTimeMillis();
         listenerOpt.ifPresent(l -> l.started(this));
         VerificationResult vr = dfsUsingStack(Node.getInitialNode(aBp, execSvc), execSvc);
