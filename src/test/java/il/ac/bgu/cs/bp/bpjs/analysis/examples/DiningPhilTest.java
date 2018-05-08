@@ -12,7 +12,7 @@ public class DiningPhilTest {
     
     public static void main(String[] args) throws InterruptedException {
         // testing the dining philosophers for a large number of philosophers
-        printCounterExample(verifyPhilosophers(15));
+        printCounterExample(verifyPhilosophers(30));
     }
 
     @Test

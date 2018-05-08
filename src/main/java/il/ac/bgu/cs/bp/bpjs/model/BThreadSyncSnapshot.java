@@ -30,7 +30,7 @@ public class BThreadSyncSnapshot implements Serializable {
     private String name;
 
     /**
-     * The Javascript function that will be called when {@code this} BThread
+     * The JavaScript function that will be called when {@code this} BThread
      * runs.
      */
     private Function entryPoint;
@@ -42,7 +42,7 @@ public class BThreadSyncSnapshot implements Serializable {
     private Function interruptHandler = null;
 
     /**
-     * Proxy to {@code this}, used from the Javascript code.
+     * Proxy to {@code this}, used from the JavaScript code.
      */
     private final BThreadJsProxy proxy = new BThreadJsProxy(this);
 
