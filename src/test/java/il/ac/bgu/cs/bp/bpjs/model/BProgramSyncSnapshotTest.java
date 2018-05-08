@@ -29,12 +29,13 @@ import static org.junit.Assert.*;
 
 import il.ac.bgu.cs.bp.bpjs.execution.listeners.BProgramRunnerListener;
 import il.ac.bgu.cs.bp.bpjs.internal.ExecutorServiceFactory;
+import il.ac.bgu.cs.bp.bpjs.execution.BProgramRunner;
 import il.ac.bgu.cs.bp.bpjs.model.eventselection.EventSelectionResult;
-import org.junit.Assert;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 
+import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
@@ -64,6 +65,19 @@ public class BProgramSyncSnapshotTest {
         assertEquals(bss, bss);
         Assert.assertNotEquals(bss, null);
         Assert.assertNotEquals(bss, "I'm not even the same class");
+    }
+
+    /*
+     This is a really basic test just to see if the engine can handle these cases.
+     */
+    @Test
+    public void complicatedScopeTest() throws InterruptedException {
+        BProgram program = new SingleResourceBProgram("nestedCalls.js");
+        program.putInGlobalScope("taskA", true);
+        program.putInGlobalScope("taskB", true);
+        program.putInGlobalScope("taskC", true);
+        BProgramRunner rnr = new BProgramRunner(program);
+        rnr.run();
     }
 
     @Test
@@ -153,7 +167,7 @@ public class BProgramSyncSnapshotTest {
     @Test
     @Ignore("Highlight shared state in snapshot")
     public void testEqualsSingleStepAssert() throws InterruptedException {
-        List<BProgramRunnerListener> listeners = new ArrayList<>();
+        List<BProgramRunnerListener> localListeners = new ArrayList<>();
         BProgram bprog = new StringBProgram("bp.registerBThread(function(){\n" +
                 "        bp.sync({request:bp.Event(\"A\")});\n" +
                 "        bp.sync({request:bp.Event(\"B\")});\n" +
@@ -185,8 +199,8 @@ public class BProgramSyncSnapshotTest {
         Set<BEvent> possibleEvents_b = bprog2.getEventSelectionStrategy().selectableEvents(stepb.getStatements(), stepb.getExternalEvents());
         EventSelectionResult event_a = bprog.getEventSelectionStrategy().select(stepa.getStatements(), stepa.getExternalEvents(), possibleEvents_a).get();
         EventSelectionResult event_b = bprog2.getEventSelectionStrategy().select(stepa.getStatements(), stepb.getExternalEvents(), possibleEvents_b).get();
-        BProgramSyncSnapshot step2a = stepa.triggerEvent(event_a.getEvent(), execSvcA, listeners);
-        BProgramSyncSnapshot step2b = stepb.triggerEvent(event_b.getEvent(), execSvcB, listeners);
+        BProgramSyncSnapshot step2a = stepa.triggerEvent(event_a.getEvent(), execSvcA, localListeners);
+        BProgramSyncSnapshot step2b = stepb.triggerEvent(event_b.getEvent(), execSvcB, localListeners);
         assertEquals(step2a, step2b);
         assertNotEquals(stepa, step2a);
         assertNotEquals(stepb, step2b);
@@ -195,13 +209,23 @@ public class BProgramSyncSnapshotTest {
         possibleEvents_b = bprog2.getEventSelectionStrategy().selectableEvents(step2b.getStatements(), step2b.getExternalEvents());
         event_a = bprog.getEventSelectionStrategy().select(step2a.getStatements(), step2a.getExternalEvents(), possibleEvents_a).get();
         event_b = bprog2.getEventSelectionStrategy().select(step2b.getStatements(), step2b.getExternalEvents(), possibleEvents_b).get();
-        BProgramSyncSnapshot step3a = step2a.triggerEvent(event_a.getEvent(), execSvcA, listeners);
+        BProgramSyncSnapshot step3a = step2a.triggerEvent(event_a.getEvent(), execSvcA, localListeners);
         assertNotEquals(step3a, step2a);
         assertTrue(step2a.isStateValid());
         assertTrue(!step3a.isStateValid());
-        BProgramSyncSnapshot step3b = step2b.triggerEvent(event_b.getEvent(), execSvcB, listeners);
+        BProgramSyncSnapshot step3b = step2b.triggerEvent(event_b.getEvent(), execSvcB, localListeners);
         assertNotEquals(step3a, step3b);
         assertNotEquals(step3a, step2a);
         assertNotEquals(step3b, step2a);
+    }
+  
+    @Test
+    public void complicatedScopeTests() throws InterruptedException {
+        BProgram program = new SingleResourceBProgram("nestedCalls.js");
+        program.putInGlobalScope("taskA", true);
+        program.putInGlobalScope("taskB", true);
+        program.putInGlobalScope("taskC", true);
+        BProgramRunner rnr = new BProgramRunner(program);
+        rnr.run();
     }
 }
