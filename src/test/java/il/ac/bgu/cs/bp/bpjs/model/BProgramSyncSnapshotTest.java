@@ -29,6 +29,7 @@ import il.ac.bgu.cs.bp.bpjs.execution.BProgramRunner;
 import static org.junit.Assert.*;
 
 import il.ac.bgu.cs.bp.bpjs.execution.listeners.BProgramRunnerListener;
+import il.ac.bgu.cs.bp.bpjs.execution.BProgramRunner;
 import il.ac.bgu.cs.bp.bpjs.internal.ExecutorServiceMaker;
 import il.ac.bgu.cs.bp.bpjs.model.eventselection.EventSelectionResult;
 
@@ -65,6 +66,19 @@ public class BProgramSyncSnapshotTest {
         assertEquals(bss, bss);
         Assert.assertNotEquals(bss, null);
         Assert.assertNotEquals(bss, "I'm not even the same class");
+    }
+
+    /*
+     This is a really basic test just to see if the engine can handle these cases.
+     */
+    @Test
+    public void complicatedScopeTest() throws InterruptedException {
+        BProgram program = new SingleResourceBProgram("nestedCalls.js");
+        program.putInGlobalScope("taskA", true);
+        program.putInGlobalScope("taskB", true);
+        program.putInGlobalScope("taskC", true);
+        BProgramRunner rnr = new BProgramRunner(program);
+        rnr.run();
     }
 
     @Test
