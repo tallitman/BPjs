@@ -24,35 +24,29 @@
 
 
 /* globals
-    INITIAL_ARRAY_SIZE - Size of initial array of global variables
-    ARRAY_STEP - Number of objects to add
+    INITIAL_ARRAY_SIZE - Size of initial array of events
+    ARRAY_STEP - Number of events to add per step
     NUM_STEPS - Number of steps to take
-    OBJECT_TYPE - either 0 (integer), 1 (nested objects)
 */
-var ITERATION = 0;
 
-
+bp.log.setLevel("Info");
 function pusher(i, j) {
-    let toPush;
-    let objVal = 4150 + ITERATION;
-    if (0 === OBJECT_TYPE) {
-        toPush = objVal;
-    } else {
-        toPush = {step: i, step_index: j, 'objVal': objVal};
-    }
-    ITERATION += 1;
+    let toPush = bp.Event("event"+i); //TODO: use string formatting if Rhino allows
     return toPush;
 }
 
-bp.registerBThread("arraySizer", function () {
-    let GLOBAL_ARRAY = [];
-    for (let init = 0; init < INITIAL_ARRAY_SIZE; init++) {
-        GLOBAL_ARRAY.push(pusher());
-    }
+
+var GLOBAL_ARRAY = [];
+for (let init = 0; init < INITIAL_ARRAY_SIZE; init++) {
+    GLOBAL_ARRAY.push(pusher(-1,-1)); //dummy data at init
+}
+
+bp.registerBThread("eventPicker", function () {
     for (let i = 0; i < NUM_STEPS; i++) {
         for (let j = 0; j < ARRAY_STEP; j++) {
             GLOBAL_ARRAY.push(pusher(i, j));
         }
-        bp.sync({request: bp.Event("A")});
+        let e = bp.sync({request:GLOBAL_ARRAY});
+        bp.log.info("at step "+ i +" the event is " +e.name);
     }
 });
