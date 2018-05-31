@@ -8,7 +8,7 @@
   <groupId>org.mozilla</groupId>
   <artifactId>rhino</artifactId>
   <name>Mozilla Rhino</name>
-  <version>1.7.7.11-SNAPSHOT</version>
+  <version>1.7.11-SNAPSHOT</version>
   <packaging>jar</packaging>
   <description>
     Rhino is an open-source implementation of JavaScript written entirely in Java. It is typically embedded into Java applications to provide scripting to end users.
