@@ -9,6 +9,7 @@ import java.util.concurrent.*;
 
 import il.ac.bgu.cs.bp.bpjs.exceptions.BPjsCodeEvaluationException;
 import il.ac.bgu.cs.bp.bpjs.exceptions.BPjsException;
+import il.ac.bgu.cs.bp.bpjs.exceptions.BPjsRuntimeException;
 import il.ac.bgu.cs.bp.bpjs.execution.tasks.FailedAssertionException;
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -21,6 +22,9 @@ import org.mozilla.javascript.Scriptable;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.mozilla.javascript.EcmaError;
 import org.mozilla.javascript.EvaluatorException;
+import org.mozilla.javascript.NativeJavaObject;
+import org.mozilla.javascript.NativeObject;
+import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.WrappedException;
 
 /**
@@ -72,13 +76,13 @@ public abstract class BProgram {
     private final BlockingQueue<BEvent> recentlyEnqueuedExternalEvents = new LinkedBlockingQueue<>();
 
     /**
-     * BThreads added between bsyncs are added here.
+     * BThreads added between bp.syncs are added here.
      */
     private final BlockingQueue<BThreadSyncSnapshot> recentlyRegisteredBthreads = new LinkedBlockingDeque<>();
 
     private volatile boolean started = false;
 
-    protected Scriptable programScope;
+    protected final ScriptableObject programScope = new NativeObject();
     
     private EventSelectionStrategy eventSelectionStrategy;
     
@@ -174,66 +178,12 @@ public abstract class BProgram {
     }
     
     /**
-     * Reads and evaluates the code at the passed input stream. The stream is 
-     * read to its end, but is not closed.
-     * 
-     * @param inStrm Input stream for reading the script to be evaluated.
-     * @param scriptName for error reporting purposes.
-     * @return Result of evaluating the code at {@code inStrm}.
-     */
-    protected Object evaluate(InputStream inStrm, String scriptName) {
-        InputStreamReader streamReader = new InputStreamReader(inStrm, StandardCharsets.UTF_8);
-        BufferedReader br = new BufferedReader(streamReader);
-        StringBuilder sb = new StringBuilder();
-        String line;
-        try {
-            while ((line = br.readLine()) != null) {
-                sb.append(line).append("\n");
-            }
-        } catch (IOException e) {
-            throw new RuntimeException("error while reading javascript from stream", e);
-        }
-        String script = sb.toString();
-        return evaluate(script, scriptName);
-    }
-
-    /**
-     * Runs the passed code in the passed scope.
-     * @param script Code to evaluate
-     * @param scriptName For error reporting purposes.
-     * @return Result of code evaluation.
-     */
-    protected Object evaluate(String script, String scriptName) {
-        try {
-            Context curCtx = Context.getCurrentContext();
-            curCtx.setLanguageVersion(Context.VERSION_1_8);
-            return curCtx.evaluateString(programScope, script, scriptName, 1, null);
-        } catch (EcmaError rerr) {
-            if ( rerr.getErrorMessage().trim().equals("\"bsync\" is not defined.") ) {
-                throw new BPjsCodeEvaluationException("'bsync' is only defined in BThreads. Did you forget to call 'bp.registerBThread()'?", rerr);
-            }
-            throw new BPjsCodeEvaluationException(rerr);
-            
-        } catch (WrappedException wrapped) {
-            if ( wrapped.getCause() instanceof BPjsException ) {
-                throw (BPjsException)wrapped.getCause();
-            } else {
-                throw wrapped;
-            }
-            
-        } catch (EvaluatorException evalExp) {
-            throw new BPjsCodeEvaluationException(evalExp);
-        }
-    }
-    
-    /**
      * Registers a BThread into the program. If the program started, the BThread
      * will take part in the current bstep.
      *
      * @param bt the BThread to be registered.
      */
     public void registerBThread(BThreadSyncSnapshot bt) {
-        bt.setupScope(programScope);
         recentlyRegisteredBthreads.add(bt);
         addBThreadCallback.ifPresent( cb -> cb.bthreadAdded(this, bt));
     }
@@ -273,8 +223,8 @@ public abstract class BProgram {
             if ( prependedCode != null ) {
                 prependedCode.forEach( s -> evaluate(s, "prependedCode") );
             }
-            setupProgramScope(programScope);
-            bthreads.forEach(bt -> bt.setupScope(programScope));
+            setupProgramScope(programScope); // FIXME probably should be above the prepended code evaluation. not below.
+            
             if ( appendedCode != null ) {
                 appendedCode.forEach( s -> evaluate(s, "appendedCode") );
             }
@@ -291,16 +241,24 @@ public abstract class BProgram {
     }
 
     private void initProgramScope(Context cx) {
-        // load and execute globalScopeInit.js
-//        ImporterTopLevel importer = new ImporterTopLevel(cx);
-//        programScope = cx.initStandardObjects(importer);
-        programScope = cx.initStandardObjects();
-        BProgramJsProxy proxy = new BProgramJsProxy(this);
-        programScope.put("bp", programScope, Context.javaToJS(proxy, programScope));
-        
-//        evaluateResource("globalScopeInit.js");// <-- Currently not needed. Leaving in as we might need it soon.
+        cx.initStandardObjects(programScope, false);
+//        programScope = cx.initStandardObjects();
+
         initialScopeValues.forEach((key, value) -> putInGlobalScope(key, value));
         initialScopeValues=null;
+
+        BProgramJsProxy proxy = new BProgramJsProxy(this);
+        final NativeJavaObject proxyJs = (NativeJavaObject) Context.javaToJS(proxy, programScope);
+        proxyJs.delete("setCurrentBThread");
+        ScriptableObject.defineProperty(programScope, "bp", proxyJs, 
+            ScriptableObject.READONLY);
+        
+        /*
+        The code below might be relevant soon, so leaving it here as a reference
+        evaluateResource("globalScopeInit.js");
+        ScriptableObject.defineClass(programScope, ClassWithGlobalDefinedFunctions.class);
+        */
+            
     }
 
     /**
@@ -367,7 +325,7 @@ public abstract class BProgram {
      * Returns the program's global scope.
      * @return the global scope of the program.
      */
-    public Scriptable getGlobalScope() {
+    public ScriptableObject getGlobalScope() {
         return programScope;
     }
     
@@ -407,19 +365,61 @@ public abstract class BProgram {
     }
     
     /**
-     * Sets the name of the program
-     * @param name the new program's name
+     * Reads and evaluates the code at the passed input stream. The stream is 
+     * read to its end, but is not closed.
+     * 
+     * @param inStrm Input stream for reading the script to be evaluated.
+     * @param scriptName for error reporting purposes.
+     * @return Result of evaluating the code at {@code inStrm}.
      */
-    public void setName(String name) {
-        this.name = name;
+    protected Object evaluate(InputStream inStrm, String scriptName) {
+        InputStreamReader streamReader = new InputStreamReader(inStrm, StandardCharsets.UTF_8);
+        BufferedReader br = new BufferedReader(streamReader);
+        StringBuilder sb = new StringBuilder();
+        String line;
+        try {
+            while ((line = br.readLine()) != null) {
+                sb.append(line).append("\n");
+            }
+        } catch (IOException e) {
+            throw new RuntimeException("error while reading javascript from stream", e);
+        }
+        String script = sb.toString();
+        return evaluate(script, scriptName);
     }
 
     /**
-     * @return the program's name
+     * Runs the passed code in the passed scope.
+     * @param script Code to evaluate
+     * @param scriptName For error reporting purposes.
+     * @return Result of code evaluation.
      */
-    public String getName() {
-        return name;
+    protected Object evaluate(String script, String scriptName) {
+        try {
+            Context curCtx = Context.getCurrentContext();
+            curCtx.setLanguageVersion(Context.VERSION_1_8);
+            return curCtx.evaluateString(programScope, script, scriptName, 1, null);
+        } catch (EcmaError rerr) {
+            if ( rerr.getErrorMessage().trim().equals("\"bp.sync\" is not defined.") ) {
+                throw new BPjsCodeEvaluationException("'bp.sync' is only defined in BThreads. Did you forget to call 'bp.registerBThread()'?", rerr);
+            }
+            throw new BPjsCodeEvaluationException(rerr);
+            
+        } catch (WrappedException wrapped) {
+            if ( wrapped.getCause() instanceof BPjsException ) {
+                throw (BPjsException)wrapped.getCause();
+            } else if ( wrapped.getCause() instanceof IllegalStateException ) {
+                throw new BPjsRuntimeException("Javascript Engine at illegal state: " + wrapped.getCause().getMessage() + ". " +
+                    "Note that calls to bp.sync can only happen inside a b-thread.", wrapped.getCause());
+            } else {
+                throw wrapped;
+            }
+            
+        } catch (EvaluatorException evalExp) {
+            throw new BPjsCodeEvaluationException(evalExp);
+        }
     }
+    
     
     Set<BThreadSyncSnapshot> drainRecentlyRegisteredBthreads() {
         Set<BThreadSyncSnapshot> out = new HashSet<>();
@@ -452,5 +452,22 @@ public abstract class BProgram {
     public String toString() {
         return "[BProgram " + getName() + "]";
     }
+    
+    /**
+     * Sets the name of the program
+     * @param name the new program's name
+     */
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    /**
+     * @return the program's name
+     */
+    public String getName() {
+        return name;
+    }
+    
+    
     
 }

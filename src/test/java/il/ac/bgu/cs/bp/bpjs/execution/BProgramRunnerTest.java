@@ -40,9 +40,6 @@ import org.junit.Test;
  */
 public class BProgramRunnerTest {
 
-    public BProgramRunnerTest() {
-    }
-
     /**
      * Test of start method, of class BProgramRunner.
      */
@@ -68,8 +65,6 @@ public class BProgramRunnerTest {
         FailedAssertion expected = new FailedAssertion("failRightAWay!", "forward");
         assertEquals(expected, runner.getFailedAssertion());
         assertEquals(0, listener.getEvents().size());
-
-
     }
 
 

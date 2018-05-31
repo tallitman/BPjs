@@ -67,8 +67,8 @@ public class BProgramSyncSnapshotTest {
         Assert.assertNotEquals(bss, "I'm not even the same class");
     }
 
-    /*
-     This is a really basic test just to see if the engine can handle these cases.
+    /**
+     * This is a really basic test just to see if the engine can handle these cases.
      */
     @Test
     public void complicatedScopeTest() throws InterruptedException {
@@ -97,9 +97,9 @@ public class BProgramSyncSnapshotTest {
         stepa.triggerEvent(event_a.getEvent(), execSvcA, listeners);
     }
 
-    /*
-    Test for equivalent BProgram snapshots with no variables
-    This test checks for identical state if
+    /**
+     * Test for equivalent BProgram snapshots with no variables
+     * This test checks for identical state if
         zero steps have run
         1 step has run
         n steps have run
@@ -107,16 +107,14 @@ public class BProgramSyncSnapshotTest {
      */
     @Test
     public void testEqualsSingleStep() throws InterruptedException {
-        BProgram bprog = new StringBProgram("bp.registerBThread(function(){\n" +
-                "        bp.sync({request:bp.Event(\"A\")});\n" +
-                "        bp.sync({request:bp.Event(\"B\")});\n" +
-                "        bp.ASSERT(false,\"Failed Assert\");\n" +
-                "});");
-        BProgram bprog2 = new StringBProgram("bp.registerBThread(function(){\n" +
-                "        bp.sync({request:bp.Event(\"A\")});\n" +
-                "        bp.sync({request:bp.Event(\"B\")});\n" +
-                "        bp.ASSERT(false,\"Failed Assert\");\n" +
-                "});");
+        final String src = "bp.registerBThread(function(){\n" +
+            "        bp.sync({request:bp.Event(\"A\")});\n" +
+            "        bp.sync({request:bp.Event(\"B\")});\n" +
+            "        bp.ASSERT(false,\"Failed Assert\");\n" +
+            "});";
+        
+        BProgram bprog = new StringBProgram(src);
+        BProgram bprog2 = new StringBProgram(src);
 
         BProgramSyncSnapshot setup = bprog.setup();
         BProgramSyncSnapshot setup2 = bprog2.setup();
@@ -160,9 +158,8 @@ public class BProgramSyncSnapshotTest {
     }
 
 
-    /*
-    Test for equivalent BProgram with different assertions
-
+    /**
+     * Test for equivalent BProgram with different assertions
      */
     @Test
     @Ignore("Highlight shared state in snapshot")

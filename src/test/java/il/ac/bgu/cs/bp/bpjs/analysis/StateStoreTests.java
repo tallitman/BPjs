@@ -139,7 +139,7 @@ public class StateStoreTests {
         assertTrue(storeToUse.isVisited(initial));
         Node next = initial;
         //Iteration 1,starts already at request state A
-        //At this stage, each step is different from prior due to different bsync statement
+        //At this stage, each step is different from prior due to different bp.sync statement
         for (int i = 0; i < 4; i++) {
             next = sut.getUnvisitedNextNode(next, execSvc);
             assertFalse(storeToUse.isVisited(next));

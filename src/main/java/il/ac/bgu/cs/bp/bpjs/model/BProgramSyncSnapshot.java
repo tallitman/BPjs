@@ -26,7 +26,8 @@ import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
- * The state of a {@link BProgram} when all its BThreads are at {@code bsync}.
+ * The state of a {@link BProgram} when all its BThreads are at a synchronization 
+ * point (that is, have called {@code bp.sync}.
  * This is more than a set of {@link BThreadSyncSnapshot}s, as it contains
  * the queue of external events as well.
  * 
@@ -74,17 +75,17 @@ public class BProgramSyncSnapshot {
 
     /**
      * Starts the BProgram - runs all the registered b-threads to their first 
-     * {@code bsync}. 
+     * {@code bp.sync}. 
      * 
      * @param exSvc the executor service that will advance the threads.
-     * @return A snapshot of the program at the first {@code bsync}.
+     * @return A snapshot of the program at the first {@code bp.sync}.
      * @throws java.lang.InterruptedException
      */
     public BProgramSyncSnapshot start( ExecutorService exSvc ) throws InterruptedException {
         Set<BThreadSyncSnapshot> nextRound = new HashSet<>(threadSnapshots.size());
         BPEngineTask.Listener halter = new HaltOnAssertion(exSvc);
         nextRound.addAll(exSvc.invokeAll(threadSnapshots.stream()
-                                .map(bt -> new StartBThread(bt, halter))
+                                .map(bt -> new StartBThread(bprog.getGlobalScope(), bt, halter))
                                 .collect(toList())
                 ).stream().map(this::safeGet).collect(toList())
         );
@@ -133,7 +134,7 @@ public class BProgramSyncSnapshot {
             // add the run results of all those who advance this stage
             nextRound.addAll(exSvc.invokeAll(
                                 resumingThisRound.stream()
-                                                 .map(bt -> new ResumeBThread(bt, anEvent, halter))
+                                                 .map(bt -> new ResumeBThread(anEvent, bt, halter))
                                                  .collect(toList())
                     ).stream().map(this::safeGet).filter(Objects::nonNull).collect(toList())
             );
@@ -170,12 +171,10 @@ public class BProgramSyncSnapshot {
                 listeners.forEach(l -> l.bthreadRemoved(bprog, bt));
                 bt.getInterrupt()
                         .ifPresent( func -> {
-                            final Scriptable scope = bt.getScope();
-                            scope.delete("bsync"); // can't call bsync from a break handler.
                             try {
-                                ctxt.callFunctionWithContinuations(func, scope, new Object[]{anEvent});
+                                ctxt.callFunctionWithContinuations(func, func, new Object[]{anEvent});
                             } catch ( ContinuationPending ise ) {
-                                throw new BProgramException("Cannot call bsync from a break-upon handler. Please consider pushing an external event.");
+                                throw new BProgramException("Cannot call bp.sync from a break-upon handler. Please consider pushing an external event.");
                             }
                         });
             });
@@ -252,7 +251,7 @@ public class BProgramSyncSnapshot {
         while ( ! added.isEmpty() ) {
             nextRound.addAll(exSvc.invokeAll(
                     added.stream()
-                            .map(bt -> new StartBThread(bt, assertionListener))
+                            .map(bt -> new StartBThread(bprog.getGlobalScope(), bt, assertionListener))
                             .collect(toList())
             ).stream().map(this::safeGet).filter(Objects::nonNull).collect(toList()));
             added = bprog.drainRecentlyRegisteredBthreads();

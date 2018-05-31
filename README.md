@@ -43,6 +43,12 @@ a link to this page somewhere in the documentation/system about section.
 
 ## Change log for the BPjs library.
 
+### 2018-05-31
+* :put_litter_in_its_place: Removed `ContinuationProgramState`
+* :put_litter_in_its_place: Removed `bsync`, as it is now incompatible with the internal proxy structure.
+* :arrows_counterclockwise: Cleanups
+* :sparkles: :put_litter_in_its_place: Registering interrupt handlers is now done under `bp`, not via a global function. This means that ALL OF BPjs is now under `bp`. Also, removed class `BThreadJsProxy`.
+
 ### 2018-04-25
 * :bug: Fixed serialization and de-serialization of b-threads. Global JS objects are now handled properly.
 * More tests, especially for the continuation state comparison.

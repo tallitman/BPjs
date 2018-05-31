@@ -64,7 +64,7 @@ public abstract class AbstractEventSelectionStrategy implements EventSelectionSt
     /**
      * Randomly select an event from {@code selectableEvents}, or a non-blocked event from {@code externalEvents}, in case {@code selectableEvents} is empty.
      * 
-     * @param statements Statements at the current {@code bsync}.
+     * @param statements Statements at the current {@code bp.sync}.
      * @param externalEvents 
      * @param selectableEvents
      * @return An optional event selection result.

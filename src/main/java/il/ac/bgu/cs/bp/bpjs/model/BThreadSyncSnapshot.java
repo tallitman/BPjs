@@ -3,21 +3,21 @@ package il.ac.bgu.cs.bp.bpjs.model;
 import java.io.Serializable;
 import java.util.Optional;
 
-import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Function;
 import org.mozilla.javascript.Callable;
 import org.mozilla.javascript.NativeContinuation;
 import org.mozilla.javascript.Scriptable;
 
-import il.ac.bgu.cs.bp.bpjs.execution.jsproxy.BThreadJsProxy;
-import il.ac.bgu.cs.bp.bpjs.analysis.ContinuationProgramState;
+import java.lang.reflect.Method;
 import java.util.Objects;
+import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextFactory;
+import org.mozilla.javascript.FunctionObject;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.ScriptableObject;
 
 /**
- * The state of a BThread at {@code bsync}.
+ * The state of a BThread at a synchronization point.
  *
  * @author orelmosheweinstock
  * @author Michael
@@ -42,16 +42,6 @@ public class BThreadSyncSnapshot implements Serializable {
     private Function interruptHandler = null;
 
     /**
-     * Proxy to {@code this}, used from the JavaScript code.
-     */
-    private final BThreadJsProxy proxy = new BThreadJsProxy(this);
-
-    /**
-     * Scope for the JavaScript code execution.
-     */
-    private Scriptable scope;
-
-    /**
      * Continuation of the code.
      */
     private NativeContinuation continuation;
@@ -61,8 +51,6 @@ public class BThreadSyncSnapshot implements Serializable {
      */
     private BSyncStatement bSyncStatement;
     
-    private transient ContinuationProgramState programState;
-
     public BThreadSyncSnapshot(String aName, Function anEntryPoint) {
         name = aName;
         entryPoint = anEntryPoint;
@@ -82,16 +70,14 @@ public class BThreadSyncSnapshot implements Serializable {
      * @param name
      * @param entryPoint
      * @param interruptHandler
-     * @param scope
      * @param continuation
      * @param bSyncStatement
      */
-    public BThreadSyncSnapshot(String name, Function entryPoint, Function interruptHandler, Scriptable scope,
+    public BThreadSyncSnapshot(String name, Function entryPoint, Function interruptHandler, 
             NativeContinuation continuation, BSyncStatement bSyncStatement) {
         this.name = name;
         this.entryPoint = entryPoint;
         this.interruptHandler = interruptHandler;
-        this.scope = scope;
         this.continuation = continuation;
         this.bSyncStatement = bSyncStatement;
     }
@@ -107,7 +93,6 @@ public class BThreadSyncSnapshot implements Serializable {
         BThreadSyncSnapshot retVal = new BThreadSyncSnapshot(name, entryPoint);
         retVal.continuation = aContinuation;
         retVal.setInterruptHandler(interruptHandler);
-        retVal.setupScope(scope.getParentScope());
 
         retVal.bSyncStatement = aStatement;
         aStatement.setBthread(retVal);
@@ -115,21 +100,29 @@ public class BThreadSyncSnapshot implements Serializable {
         return retVal;
     }
 
-    void setupScope(Scriptable programScope) {
-        scope = (Scriptable) Context.javaToJS(proxy, programScope);
-        scope.delete("equals");
-        scope.delete("hashCode");
-        scope.delete("toString");
-        scope.delete("notify");
-        scope.delete("notifyAll");
-        scope.delete("wait");
-        
-        scope.setParentScope(programScope);
-        // setup entryPoint's scope s.t. it knows our proxy
-        Scriptable curScope = entryPoint.getParentScope();
-        entryPoint.setParentScope(scope);
-        scope.setParentScope(curScope);
-        
+    /**
+     * Creates a scope for running JS code of {@code this} b-thread.
+     * @param programScope Top level scope of the b-program {@code this} is part of.
+     * @param ctxt 
+     * @return scope for running b-thread code against.
+     * TODO: Can be moved to StartBThread task class.
+     */
+    public ScriptableObject createExecutionScope(Scriptable programScope, Context ctxt) {
+        try {
+            // FIXME Should add a way for setting this b-thread's interrupt handler.
+            ScriptableObject scope = (ScriptableObject)ctxt.newObject(programScope);
+            scope.setPrototype(programScope);
+            scope.setParentScope(null);
+            
+            Method setHdlrMethod = getClass().getDeclaredMethod("setInterruptHandler", Function.class);
+            FunctionObject func = new FunctionObject("setInterruptHandler", setHdlrMethod, programScope);
+            scope.put("setInterruptHandler", scope, "XXX");
+                    
+            return scope;
+            
+        } catch (NoSuchMethodException|SecurityException ex) {
+            throw new RuntimeException("Cannot get access the setInterruptHandlerMethod", ex);
+        }
     }
 
     public BSyncStatement getBSyncStatement() {
@@ -143,7 +136,7 @@ public class BThreadSyncSnapshot implements Serializable {
         }
     }
 
-    public Object getContinuation() {
+    public NativeContinuation getContinuation() {
         return continuation;
     }
 
@@ -168,20 +161,8 @@ public class BThreadSyncSnapshot implements Serializable {
         interruptHandler = anInterruptHandler;
     }
 
-    public Scriptable getScope() {
-        return scope;
-    }
-
     public Function getEntryPoint() {
         return entryPoint;
-    }
-    
-    @Deprecated
-    public ContinuationProgramState getContinuationProgramState() {
-        if ( programState == null ) {
-            programState = new ContinuationProgramState((NativeContinuation) continuation);
-        }
-        return programState;
     }
     
     @Override

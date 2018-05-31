@@ -12,7 +12,7 @@ import il.ac.bgu.cs.bp.bpjs.internal.OrderedSet;
 import java.util.SortedSet;
 
 /**
- * A statement a BThread makes at a {@code bsync} point. Contains data about 
+ * A statement a BThread makes at a {@code bp.sync} point. Contains data about 
  * what events it requests, waits for, and blocks, and possible additional data,
  * such as labels, or a break-upon event set.
  * 

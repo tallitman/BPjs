@@ -1,6 +1,6 @@
-/* global bsync, blocking */
+/* global bp */
 
-var _bsync = bsync;
+var _bp_sync = bp.sync;
 
 new Object {
   blocking: new EventStack(),
@@ -20,9 +20,9 @@ new Object {
     var e;
     if (!this.blocking.isEmpty()) {
       var eset = new EventSet([blocked, this.blocking]);
-      e = _bsync(requested, wait, eset);
+      e = _bp_sync(requested, wait, eset);
     } else {
-      e = _bsync(requested, wait, blocked);
+      e = _bp_sync(requested, wait, blocked);
     }
 
     return e;

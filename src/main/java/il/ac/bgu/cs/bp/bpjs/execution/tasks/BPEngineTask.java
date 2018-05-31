@@ -1,5 +1,6 @@
 package il.ac.bgu.cs.bp.bpjs.execution.tasks;
 
+import il.ac.bgu.cs.bp.bpjs.execution.jsproxy.BProgramJsProxy;
 import il.ac.bgu.cs.bp.bpjs.model.BProgram;
 import il.ac.bgu.cs.bp.bpjs.model.BSyncStatement;
 import java.util.concurrent.Callable;
@@ -38,7 +39,7 @@ public abstract class BPEngineTask implements Callable<BThreadSyncSnapshot>{
     public BThreadSyncSnapshot call() {
         try {
             Context jsContext = Context.enter();
-            
+            BProgramJsProxy.setCurrentBThread(bss);
             return callImpl( jsContext );
 
         } catch (ContinuationPending cbs) {
@@ -57,6 +58,7 @@ public abstract class BPEngineTask implements Callable<BThreadSyncSnapshot>{
             }
             
         } finally {
+            BProgramJsProxy.setCurrentBThread(null);
             if (Context.getCurrentContext() != null) {
                 Context.exit();
             }

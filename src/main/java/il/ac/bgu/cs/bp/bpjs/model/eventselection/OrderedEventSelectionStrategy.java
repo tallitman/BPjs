@@ -45,7 +45,7 @@ import org.mozilla.javascript.Context;
  * blocked by other b-threads.
  * 
  * <code>
- *  bsync({request:[evt1, evt2]...});
+ *  bp.sync({request:[evt1, evt2]...});
  * </code>
  * 
  * 

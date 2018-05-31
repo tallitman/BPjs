@@ -1,4 +1,4 @@
-/* global bp, bsync
+/* global bp
  * The MIT License
  *
  * Copyright 2017 michael.
@@ -26,11 +26,11 @@
 /**
  * Set of possible programs that can interact with each other
  * Taskset A: A bthread that calls a three different functions,
- *      in each, trivial calculation then call to Bsync statement
+ *      in each, trivial calculation then call to pp.sync statement
  *      each function in turn requests A,B,C
  * Taskset B: A bthread that runs as a standalone recursive function,
  *            each time it recurses (up to limit) it requests A,B,C
- * Taskset C: (TODO) A bthread that constructs a nested object for each bsync statement
+ * Taskset C: (TODO) A bthread that constructs a nested object for each bp.sync statement
  *                  Constructing a nested object of A,B,C statements
  * There's a sentinel BThread running A,B,C forever.
  */

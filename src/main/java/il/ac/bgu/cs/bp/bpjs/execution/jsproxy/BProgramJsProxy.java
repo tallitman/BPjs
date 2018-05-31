@@ -14,6 +14,7 @@ import java.util.Arrays;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import static java.util.stream.Collectors.toList;
@@ -69,6 +70,14 @@ public class BProgramJsProxy implements java.io.Serializable {
         }
     }
     
+    private static final ThreadLocal<AtomicReference<BThreadSyncSnapshot>> CURRENT_BTHREAD= 
+        new ThreadLocal<AtomicReference<BThreadSyncSnapshot>>(){
+            @Override
+            protected AtomicReference<BThreadSyncSnapshot> initialValue() {
+                return new AtomicReference<>();
+            }
+        };
+    
     private final BProgram program;
     
     private final AtomicInteger autoAddCounter = new AtomicInteger(0);
@@ -88,6 +97,16 @@ public class BProgramJsProxy implements java.io.Serializable {
     public BProgramJsProxy(BProgram program) {
         this.program = program;
     }
+    
+    
+    /**
+     * Set the current b-thread being run by the Java thread.
+     * @param bss 
+     */
+    public static void setCurrentBThread( BThreadSyncSnapshot bss ) {
+        CURRENT_BTHREAD.get().set(bss);
+    }
+    
     
     /**
      * Event constructor, called from Javascript, hence the funny
@@ -166,8 +185,14 @@ public class BProgramJsProxy implements java.io.Serializable {
     }
     
     
+    public void setInterruptHandler( Object aPossibleHandler ) {
+        BThreadSyncSnapshot bss = CURRENT_BTHREAD.get().get();
+        bss.setInterruptHandler(
+                (aPossibleHandler instanceof Function) ? (Function) aPossibleHandler: null );
+    }
+    
     ////////////////////////
-    // sync ("bsync") related code
+    // bp.sync ("bsync") related code
     
     public void sync( NativeObject jsRWB ) {
         sync(jsRWB, null);

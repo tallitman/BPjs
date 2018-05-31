@@ -2,6 +2,7 @@ package il.ac.bgu.cs.bp.bpjs.execution;
 
 import il.ac.bgu.cs.bp.bpjs.model.BProgram;
 import il.ac.bgu.cs.bp.bpjs.exceptions.BPjsCodeEvaluationException;
+import il.ac.bgu.cs.bp.bpjs.exceptions.BPjsException;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -18,19 +19,17 @@ public class EngineExceptionTest {
         BProgram sut = new BProgram("bad"){
             @Override
             protected void setupProgramScope(Scriptable scope) {
-                evaluate("var i=0;\n var j=42;\n var k=5; bsync({request:bp.Event(\"A\")});", "hardcoded");
+                evaluate("var i=0;\n var j=42;\n var k=5; bp.sync({request:bp.Event(\"A\")});", "hardcoded");
             }
         };
         
         try { 
             new BProgramRunner(sut).run();
-            fail("System should have thrown an error due to bsync called outside of a BThread.");
-        } catch (BPjsCodeEvaluationException exp) {
-            assertEquals( 3, exp.getLineNumber() );
-            assertEquals( "hardcoded", exp.getSourceName() );
-            assertTrue( exp.getMessage().contains("bsync"));
-            assertTrue( exp.getMessage().contains("Did you forget")); // make sure this is the friendly message
-            assertEquals(1, exp.getScriptStackTrace().size());
+            fail("System should have thrown an error due to bp.sync called outside of a BThread.");
+        } catch (BPjsException exp) {
+            // making sure that the error message uis useful.
+            assertTrue( exp.getMessage().contains("calls to bp.sync"));
+            assertTrue( exp.getMessage().contains("inside a b-thread"));
         }
     }
     

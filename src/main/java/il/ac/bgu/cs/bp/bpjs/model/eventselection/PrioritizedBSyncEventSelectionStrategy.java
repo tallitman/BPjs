@@ -29,7 +29,6 @@ import il.ac.bgu.cs.bp.bpjs.model.eventsets.ComposableEventSet;
 import il.ac.bgu.cs.bp.bpjs.model.eventsets.EventSet;
 import il.ac.bgu.cs.bp.bpjs.model.eventsets.EventSets;
 import static java.util.Collections.emptySet;
-import static java.util.Collections.singleton;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -40,7 +39,7 @@ import static java.util.stream.Collectors.toSet;
  * BSync statement priority is determined by an integer added to the BSync metadata field, like so:
  * 
  * <code>
- * bsync({ request:..., waitFor:... }, 2);
+ * bp.sync({ request:..., waitFor:... }, 2);
  * </code>
  * 
  * @author michael
