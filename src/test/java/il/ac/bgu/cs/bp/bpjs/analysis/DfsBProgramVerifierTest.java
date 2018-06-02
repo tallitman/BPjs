@@ -176,7 +176,7 @@ public class DfsBProgramVerifierTest {
         sut.setProgressListener(new BriefPrintDfsVerifierListener());
         sut.setDebugMode(true);
         VerificationResult res = sut.verify(bprog);
-        assertFalse( res.isCounterExampleFound() );
+        assertTrue( res.isCounterExampleFound() );
         assertEquals(res.getViolationType(), VerificationResult.ViolationType.Deadlock);
         assertEquals(10, res.getScannedStatesCount());
     }
