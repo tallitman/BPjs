@@ -43,6 +43,9 @@ a link to this page somewhere in the documentation/system about section.
 
 ## Change log for the BPjs library.
 
+### 2018-07-15
+* :sparkles: Added a "Known Issues" page to the guide.
+
 ### 2018-05-31
 * :put_litter_in_its_place: Removed `ContinuationProgramState`
 * :put_litter_in_its_place: Removed `bsync`, as it is now incompatible with the internal proxy structure.

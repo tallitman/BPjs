@@ -140,10 +140,13 @@ public class DfsBProgramVerifierTest {
 
     @Test(timeout = 2000)
     public void testTwoLoopingBThreads() throws Exception {
-        BProgram bprog = new StringBProgram("bp.registerBThread('bt1', function(){" + "    while(true){\n"
-                + "       bp.sync({ request:[ bp.Event(\"STAM1\") ] });\n" + "}});\n"
-                + "bp.registerBThread('bt2', function(){" + "    while(true){\n"
-                + "       bp.sync({ request:[ bp.Event(\"STAM2\") ] });\n" + "}});\n" + "");
+        BProgram bprog = new StringBProgram(
+                  "bp.registerBThread('bt1', function(){" 
+                + "    while(true){\n"
+                + "       bp.sync({ request:[ bp.Event(\"foo\") ] });\n" + "}});\n"
+                + "bp.registerBThread('bt2', function(){" 
+                + "    while(true){\n"
+                + "       bp.sync({ request:[ bp.Event(\"bar\") ] });\n" + "}});\n" + "");
 
         DfsBProgramVerifier sut = new DfsBProgramVerifier();
         sut.setIterationCountGap(1);
