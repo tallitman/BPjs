@@ -38,7 +38,7 @@ public class BThreadSyncSnapshot implements Serializable {
     /**
      * Continuation of the code.
      */
-    private Object continuation;
+    private NativeContinuation continuation;
 
     /**
      * BSync statement of the BThread at the time of the snapshot.
@@ -67,7 +67,7 @@ public class BThreadSyncSnapshot implements Serializable {
         this.name = name;
         this.entryPoint = entryPoint;
         this.interruptHandler = interruptHandler;
-        this.continuation = continuation;
+        this.continuation = (NativeContinuation)continuation;
         this.syncStatement = bSyncStatement;
     }
 
@@ -80,7 +80,7 @@ public class BThreadSyncSnapshot implements Serializable {
      */
     public BThreadSyncSnapshot copyWith(Object aContinuation, SyncStatement aStatement) {
         BThreadSyncSnapshot retVal = new BThreadSyncSnapshot(name, entryPoint);
-        retVal.continuation = aContinuation;
+        retVal.continuation = (NativeContinuation)aContinuation;
         retVal.setInterruptHandler(interruptHandler);
         retVal.syncStatement = aStatement;
         aStatement.setBthread(retVal);
@@ -132,7 +132,7 @@ public class BThreadSyncSnapshot implements Serializable {
         return entryPoint;
     }
     
-    public ContinuationProgramState getContinuationProgramState() {
+    private ContinuationProgramState getContinuationProgramState() {
         if ( programState == null ) {
             programState = new ContinuationProgramState((NativeContinuation) continuation);
         }
@@ -144,7 +144,7 @@ public class BThreadSyncSnapshot implements Serializable {
         final int prime = 31;
         int result = prime * Objects.hash(name, syncStatement);
         if (continuation != null) {
-            result += getContinuationProgramState().hashCode(name);
+            result += continuation.getImplementation().hashCode(); //getContinuationProgramState().hashCode(name);
         }
         return result;
     }
@@ -173,7 +173,8 @@ public class BThreadSyncSnapshot implements Serializable {
             return (other.continuation == null);
 
         } else {
-            return getContinuationProgramState().equals(other.getContinuationProgramState());
+            return continuation.getImplementation().equals(((NativeContinuation)other.getContinuation()).getImplementation());
+//            return getContinuationProgramState().equals(other.getContinuationProgramState());
         }
     }
 
